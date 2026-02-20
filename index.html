@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Magma Lab</title>
+    <link rel="icon" href="mmm-tek.github.io/magma-lab.png">
+    <script src="scripts/config.js"></script>
+<script>
+(function() {
+    const renderUI = () => {
+        // 1. Limpiamos cualquier contenedor previo para evitar duplicados
+        const oldUI = document.getElementById('magma-ui-overlay');
+        if (oldUI) oldUI.remove();
+        
+        // Ocultamos o vaciamos el contenedor original de tu HTML si existe
+        const originalFichero = document.getElementById('fichero-container');
+        if (originalFichero) originalFichero.style.display = 'none';
+
+        // 2. Contenedor Maestro (Pantalla Completa)
+        const uiLayer = document.createElement('div');
+        uiLayer.id = 'magma-ui-overlay';
+        Object.assign(uiLayer.style, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100vw',
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center', // Centrado Vertical
+            alignItems: 'center',     // Centrado Horizontal
+            zIndex: '2147483647',
+            pointerEvents: 'none',
+            gap: '30px',
+            fontFamily: 'Arial, sans-serif'
+        });
+
+        // 3. Buscador Google (Exact q= parameter)
+        const searchBox = document.createElement('div');
+        searchBox.style.pointerEvents = 'auto';
+        searchBox.innerHTML = `
+            <form action="https://www.google.com" method="GET" target="_blank" 
+                  style="background:#fff; padding:12px 25px; border-radius:50px; display:flex; width:450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+                <input type="text" name="q" placeholder="Search Google..." 
+                       style="flex:1; border:none; outline:none; font-size:16px; background:transparent;">
+                <button type="submit" style="background:#4285f4; color:white; border:none; border-radius:50px; padding:8px 20px; cursor:pointer; font-weight:bold;">
+                    Search
+                </button>
+            </form>`;
+
+        // 4. Grid de Botones (Solo los de MIS_SCRIPTS)
+        const buttonGrid = document.createElement('div');
+        buttonGrid.style.cssText = 'display:flex; gap:15px; justify-content:center; flex-wrap:wrap; pointer-events:auto; max-width:600px;';
+
+        if (typeof MIS_SCRIPTS !== 'undefined') {
+            MIS_SCRIPTS.forEach(id => {
+                const btn = document.createElement('div');
+                Object.assign(btn.style, {
+                    width: '75px', height: '75px', background: '#111', borderRadius: '15px',
+                    border: '2px solid #333', cursor: 'pointer', overflow: 'hidden',
+                    position: 'relative', transition: '0.2s'
+                });
+
+                btn.innerHTML = `
+                    <img src="scripts/${id}.png" onerror="this.src='https://via.placeholder.com{id.charAt(0)}'" style="width:100%; height:100%; object-fit:cover;">
+                    <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.8); color:#fff; font-size:10px; text-align:center; padding:3px 0; font-weight:bold; text-transform:uppercase;">${id}</div>
+                `;
+
+                btn.onclick = () => {
+                    const s = document.createElement('script');
+                    s.src = `scripts/${id}.js`;
+                    document.body.appendChild(s);
+                    s.onload = () => s.remove();
+                };
+
+                btn.onmouseenter = () => { btn.style.transform = 'scale(1.1)'; btn.style.borderColor = '#4285f4'; };
+                btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; btn.style.borderColor = '#333'; };
+                
+                buttonGrid.appendChild(btn);
+            });
+        }
+
+        uiLayer.appendChild(searchBox);
+        uiLayer.appendChild(buttonGrid);
+        document.body.appendChild(uiLayer);
+    };
+
+    // Ejecutar después de que todo cargue para sobreescribir el diseño base
+    window.addEventListener('load', renderUI);
+})();
+</script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        #world { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; }
+        #render-zone { width: 100%; height: 100%; filter: blur(10px) contrast(25); background: #000; }
+        canvas { display: block; position: absolute; top: 0; left: 0; }
+        #wallCanvas { z-index: 5; pointer-events: none; }
+        
+        /* FICHEROS DINÁMICOS */
+        #fichero-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100000; pointer-events: auto; }
+        .item-card { width: 65px; height: 65px; background: #111; border-radius: 12px; border: 2px solid #ff6600; cursor: pointer; overflow: hidden; position: relative; transition: 0.2s; }
+        .item-card:hover { transform: scale(1.1); box-shadow: 0 0 15px #ff6600; }
+        .item-card img { width: 100%; height: 100%; object-fit: cover; }
+        .item-label { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); color: #fff; font-size: 9px; text-align: center; padding: 2px 0; font-weight: bold; }
+
+        /* UI MAGMA LAB */
+        #ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; pointer-events: none; }
+        #toggle-btn { position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; background: #ff6600; border: 3px solid #fff; color: white; border-radius: 15px; cursor: pointer; font-size: 30px; pointer-events: auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(255, 102, 0, 0.5); }
+        #menu { position: absolute; top: 0; left: -300px; width: 280px; height: 100%; background: rgba(15, 10, 5, 0.98); border-right: 4px solid #ff6600; transition: 0.4s; pointer-events: auto; padding: 20px; box-sizing: border-box; color: white; overflow-y: auto; }
+        #menu.open { left: 0; }
+        #close-btn { background: #ff3333; border: none; color: white; width: 35px; height: 35px; border-radius: 5px; cursor: pointer; float: right; font-weight: bold; }
+        .section-title { color: #ff6600; font-size: 11px; font-weight: bold; margin: 15px 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #333; }
+        .tool-btn { width: 100%; padding: 10px; margin: 3px 0; background: #1a1a1a; border: 1px solid #333; color: #ccc; cursor: pointer; border-radius: 8px; text-align: left; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .tool-btn.active { background: #ff6600; color: white; font-weight: bold; }
+        #radar { position: fixed; bottom: 20px; right: 20px; width: 80px; height: 80px; background: rgba(40,20,10,0.8); border: 2px solid #ff6600; border-radius: 10px; pointer-events: auto; }
+        #radar-dot { position: absolute; width: 6px; height: 6px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); }
+    </style>
+</head>
+<body>
+    <div id="fichero-container"></div>
+    <div id="ui-layer">
+        <button id="toggle-btn">🔥</button>
+        <div id="menu">
+            <button id="close-btn">X</button>
+            <h2 style="color:#ff6600; margin: 0;">MAGMA LAB</h2>
+            <div class="section-title">Generadores</div>
+            <button class="tool-btn" id="btn-gen_water">💧 Grifo Agua</button>
+            <button class="tool-btn" id="btn-gen_lava">🌋 Fuente Lava</button>
+            <button class="tool-btn" id="btn-gen_fire">🔥 Lanzallamas</button>
+            <button class="tool-btn" id="btn-gen_gas">☁️ Fuga Gas</button>
+            <div class="section-title">Elementos</div>
+            <button class="tool-btn active" id="btn-water">💧 Agua</button>
+            <button class="tool-btn" id="btn-fire">🔥 Fuego</button>
+            <button class="tool-btn" id="btn-lava">🌋 Lava</button>
+            <button class="tool-btn" id="btn-gas">☁️ Gas</button>
+            <button class="tool-btn" id="btn-ice">❄️ Hielo</button>
+            <button class="tool-btn" id="btn-nuclear">☢️ Nuclear</button>
+            <button class="tool-btn" id="btn-acid">🧪 Ácido</button>
+            <div class="section-title">Estructura</div>
+            <button class="tool-btn" id="btn-wall">🧱 Hormigón</button>
+            <button class="tool-btn" id="btn-hotWall">🔥 Caliente</button>
+            <button class="tool-btn" id="btn-coldWall">🧊 Fría</button>
+            <div class="section-title">Sistemas</div>
+            <button class="tool-btn" id="btn-blackhole">🕳️ Succión</button>
+            <button class="tool-btn" id="btn-eraser">🧽 Goma</button>
+            <button class="tool-btn" id="btn-clear" style="background:#500; margin-top:20px; justify-content: center; border:none; color:white;">⚠️ RESET</button>
+        </div>
+        <div id="radar"><div id="radar-dot"></div></div>
+    </div>
+    <div id="world">
+        <div id="render-zone"><canvas id="waterCanvas"></canvas></div>
+        <canvas id="wallCanvas"></canvas>
+    </div>
+
+<script>
+const canvas = document.getElementById('waterCanvas'), wallCanvas = document.getElementById('wallCanvas');
+const ctx = canvas.getContext('2d', { alpha: false }), wctx = wallCanvas.getContext('2d');
+let width, height, worldW, worldH, mx, my, camX = 0, camY = 0;
+let particles = [], grid = {}, spawners = [];
+let spatialHash = new Map(), currentTool = 'water', isDrawing = false, isPanning = false;
+const GRID_SIZE = 24, HASH_SIZE = 30, RADIUS = 11, INTERACTION_R = 24;
+
+class Particle {
+    constructor(x, y, type) {
+        this.x = x; this.y = y; this.oldX = x; this.oldY = y;
+        this.type = type; this.life = 1.0;
+        this.decay = (['steam','fire'].includes(type)) ? 0.018 : (type === 'gas' ? 0.002 : 0);
+    }
+    update() {
+        let gravity = (['steam','fire','nuclear','gas'].includes(this.type)) ? -0.15 : 0.5;
+        const vx = (this.x - this.oldX) * 0.92, vy = (this.y - this.oldY) * 0.92;
+        this.oldX = this.x; this.oldY = this.y;
+        this.x += vx; this.y += vy + gravity;
+        if(this.decay > 0) this.life -= this.decay;
+        if (this.y > worldH - 10) { this.y = worldH - 10; this.oldY = this.y; }
+    }
+}
+
+function resize() {
+    width = window.innerWidth; height = window.innerHeight;
+    worldW = width * 2; worldH = height * 2;
+    canvas.width = worldW; canvas.height = worldH;
+    wallCanvas.width = worldW; wallCanvas.height = worldH;
+    updateCamera(); redrawWalls();
+}
+
+function updateCamera() {
+    camX = Math.max(0, Math.min(camX, worldW - width));
+    camY = Math.max(0, Math.min(camY, worldH - height));
+    document.getElementById('world').style.transform = `translate(${-camX}px, ${-camY}px)`;
+    document.getElementById('radar-dot').style.left = (camX / worldW * 100 + 10) + "%";
+    document.getElementById('radar-dot').style.top = (camY / worldH * 100 + 10) + "%";
+}
+
+function redrawWalls() {
+    wctx.clearRect(0,0,worldW,worldH);
+    for (let key in grid) {
+        let w = grid[key];
+        wctx.fillStyle = w.type === 'hot' ? '#ff4400' : w.type === 'cold' ? '#00f2ff' : '#444';
+        wctx.fillRect(w.x, w.y, GRID_SIZE, GRID_SIZE);
+    }
+    spawners.forEach(s => {
+        wctx.fillStyle = "#fff"; wctx.beginPath(); wctx.arc(s.x, s.y, 10, 0, 7); wctx.fill();
+        wctx.strokeStyle = "#ff6600"; wctx.lineWidth = 3; wctx.stroke();
+    });
+}
+
+function erase(x, y) {
+    particles = particles.filter(p => Math.hypot(p.x - x, p.y - y) > 50);
+    const gx = Math.floor(x / GRID_SIZE), gy = Math.floor(y / GRID_SIZE);
+    delete grid[`${gx},${gy}`];
+    spawners = spawners.filter(s => Math.hypot(s.x - x, s.y - y) > 25);
+    redrawWalls();
+}
+
+function solve() {
+    if (particles.length < 6500) {
+        spawners.forEach(s => { if (Math.random() < 0.4) particles.push(new Particle(s.x, s.y + 10, s.type)); });
+    }
+    spatialHash.clear();
+    for(let p of particles) {
+        const key = (Math.floor(p.x/HASH_SIZE)) + "," + (Math.floor(p.y/HASH_SIZE));
+        if(!spatialHash.has(key)) spatialHash.set(key, []);
+        spatialHash.get(key).push(p);
+    }
+    for (let p of particles) {
+        if(isDrawing && currentTool === 'blackhole') {
+            const dx = mx - p.x, dy = my - p.y, d = Math.sqrt(dx*dx + dy*dy);
+            if(d < 300) { p.x += dx/d * 7; p.y += dy/d * 7; }
+        }
+        
+        // Química entre partículas
+        const hx = Math.floor(p.x/HASH_SIZE), hy = Math.floor(p.y/HASH_SIZE);
+        for(let ox=-1; ox<=1; ox++) {
+            for(let oy=-1; oy<=1; oy++) {
+                const neighbors = spatialHash.get((hx+ox)+","+(hy+oy));
+                if(neighbors) {
+                    for(let p2 of neighbors) {
+                        if(p === p2) continue;
+                        const dx = p2.x - p.x, dy = p2.y - p.y, dSq = dx*dx + dy*dy;
+                        if(dSq < INTERACTION_R * INTERACTION_R) {
+                            const d = Math.sqrt(dSq) || 1;
+                            if (p.type === 'gas' && (p2.type === 'fire' || p2.type === 'lava')) { p.type = 'fire'; p.life = 1; }
+                            if (p.type === 'fire' && p2.type === 'water') { p.type = 'steam'; p2.type = 'steam'; }
+                            if (p.type === 'lava' && p2.type === 'water') { p.type = 'rock'; p2.type = 'steam'; }
+                            const f = (INTERACTION_R - d) / INTERACTION_R * 0.4;
+                            p.x -= dx/d * f; p.y -= dy/d * f;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // --- COLISIÓN ANTI-FILTRACIÓN (9 CELDAS) ---
+        const wgx = Math.floor(p.x / GRID_SIZE), wgy = Math.floor(p.y / GRID_SIZE);
+        for(let ox=-1; ox<=1; ox++){
+            for(let oy=-1; oy<=1; oy++){
+                const block = grid[`${wgx+ox},${wgy+oy}`];
+                if(block) {
+                    const cx = Math.max(block.x, Math.min(p.x, block.x + GRID_SIZE));
+                    const cy = Math.max(block.y, Math.min(p.y, block.y + GRID_SIZE));
+                    const dx = p.x - cx, dy = p.y - cy;
+                    const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
+                    if(d < RADIUS) {
+                        if (block.type === 'hot' && (p.type === 'water' || p.type === 'ice' || p.type === 'gas')) { p.type = 'fire'; p.life = 1; }
+                        if (p.type === 'acid' && block.type === 'normal' && Math.random() < 0.04) { delete grid[`${wgx+ox},${wgy+oy}`]; redrawWalls(); }
+                        
+                        // Empujar fuera y matar inercia
+                        const overlap = RADIUS - d;
+                        p.x += (dx/d) * overlap;
+                        p.y += (dy/d) * overlap;
+                        p.oldX = p.x; p.oldY = p.y; 
+                    }
+                }
+            }
+        }
+    }
+}
+
+function loop() {
+    if (isDrawing && !['wall','coldWall','hotWall','eraser','blackhole'].includes(currentTool) && !currentTool.startsWith('gen_') && particles.length < 6500) {
+        for(let i=0; i<3; i++) particles.push(new Particle(mx + Math.random()*8, my + Math.random()*8, currentTool));
+    }
+    solve();
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,worldW,worldH);
+    for(let i=0; i<particles.length; i++) {
+        const p = particles[i]; p.update();
+        if(p.life <= 0) { particles.splice(i, 1); i--; continue; }
+        const colors = { water:'#0088ff', lava:'#ff4400', fire:'#ffcc00', ice:'#aaddff', nuclear:'#44ff00', gas:'rgba(200, 150, 255, 0.4)', rock:'#555555', acid:'#ccff00', steam:'rgba(220, 220, 255, 0.3)' };
+        ctx.fillStyle = colors[p.type] || '#fff';
+        ctx.beginPath(); ctx.arc(p.x, p.y, 16, 0, 7); ctx.fill();
+    }
+    requestAnimationFrame(loop);
+}
+
+window.addEventListener('mousedown', e => {
+    if(e.target.closest('#ui-layer') || e.target.closest('#fichero-container')) return;
+    if(e.button === 2) { isPanning = true; return; }
+    isDrawing = true;
+    if(currentTool.startsWith('gen_')) { spawners.push({x: mx, y: my, type: currentTool.replace('gen_', '')}); redrawWalls(); }
+});
+window.addEventListener('mouseup', () => { isDrawing = false; isPanning = false; });
+window.addEventListener('mousemove', e => {
+    if(isPanning) { camX -= e.movementX; camY -= e.movementY; updateCamera(); }
+    mx = e.clientX + camX; my = e.clientY + camY;
+    if(isDrawing) {
+        if(['wall','coldWall','hotWall'].includes(currentTool)) {
+            const gx = Math.floor(mx/GRID_SIZE), gy = Math.floor(my/GRID_SIZE);
+            grid[`${gx},${gy}`] = { x: gx*GRID_SIZE, y: gy*GRID_SIZE, type: currentTool.replace('Wall','').toLowerCase() };
+            redrawWalls();
+        }
+        if(currentTool === 'eraser') erase(mx, my);
+    }
+});
+
+document.getElementById('toggle-btn').onclick = () => document.getElementById('menu').classList.add('open');
+document.getElementById('close-btn').onclick = () => document.getElementById('menu').classList.remove('open');
+document.querySelectorAll('.tool-btn').forEach(btn => btn.onclick = () => {
+    if(btn.id === 'btn-clear') { particles = []; grid = {}; spawners = []; redrawWalls(); return; }
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTool = btn.id.replace('btn-', '');
+});
+
+if (typeof MIS_SCRIPTS !== 'undefined') {
+    const cont = document.getElementById('fichero-container');
+    MIS_SCRIPTS.forEach(n => {
+        const card = document.createElement('div'); card.className = 'item-card';
+        card.innerHTML = `<img src="scripts/${n}.png" onerror="this.src='https://via.placeholder.com'"><div class="item-label">${n}</div>`;
+        card.onclick = () => { const s = document.createElement('script'); s.src=`scripts/${n}.js`; document.body.appendChild(s); };
+        cont.appendChild(card);
+    });
+}
+
+resize(); window.onresize = resize; loop();
+window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+});
+</script>
+</body>
+</html>
