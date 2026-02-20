@@ -137,9 +137,7 @@ function erase(x, y) {
 }
 
 function solve() {
-    if (particles.length < 3000) {
-        spawners.forEach(s => { if (Math.random() < 0.4) particles.push(new Particle(s.x, s.y + 10, s.type)); });
-    }
+    spawners.forEach(s => { if (Math.random() < 0.4) particles.push(new Particle(s.x, s.y + 10, s.type)); });
     spatialHash.clear();
     for(let p of particles) {
         const key = (Math.floor(p.x/HASH_SIZE)) + "," + (Math.floor(p.y/HASH_SIZE));
@@ -201,7 +199,7 @@ function solve() {
 }
 
 function loop() {
-    if(isDrawing && !['wall','coldWall','hotWall','eraser','blackhole'].includes(currentTool) && !currentTool.startsWith('gen_') && particles.length < 3000) {
+    if(isDrawing && !['wall','coldWall','hotWall','eraser','blackhole'].includes(currentTool) && !currentTool.startsWith('gen_')) {
         for(let i=0; i<3; i++) particles.push(new Particle(mx + Math.random()*8, my + Math.random()*8, currentTool));
     }
     solve();
