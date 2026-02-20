@@ -59,6 +59,10 @@
             <button class="tool-btn" id="btn-ice">❄️ Hielo</button>
             <button class="tool-btn" id="btn-nuclear">☢️ Nuclear</button>
             <button class="tool-btn" id="btn-acid">🧪 Ácido</button>
+            <button class="tool-btn" id="btn-plasma">⚡ Plasma</button>
+            <button class="tool-btn" id="btn-vapor">💨 Vapor</button>
+            <button class="tool-btn" id="btn-saltwater">🌊 Agua Salada</button>
+            <button class="tool-btn" id="btn-metal">⚙️ Metal</button>
             <div class="section-title">Estructura</div>
             <button class="tool-btn" id="btn-wall">🧱 Hormigón</button>
             <button class="tool-btn" id="btn-hotWall">🔥 Caliente</button>
@@ -87,10 +91,11 @@ class Particle {
     constructor(x, y, type) {
         this.x = x; this.y = y; this.oldX = x; this.oldY = y;
         this.type = type; this.life = 1.0;
-        this.decay = (['steam','fire'].includes(type)) ? 0.018 : (type === 'gas' ? 0.002 : 0);
+        this.decay = (['steam','fire'].includes(type)) ? 0.018 : (type === 'gas' ? 0.002 : (type === 'plasma' ? 0.015 : (type === 'vapor' ? 0.008 : 0)));
+        this.temp = (type === 'fire' || type === 'lava' || type === 'plasma') ? 1.0 : 0;
     }
     update() {
-        let gravity = (['steam','fire','nuclear','gas'].includes(this.type)) ? -0.15 : 0.5;
+        let gravity = (['steam','fire','nuclear','gas','plasma','vapor'].includes(this.type)) ? -0.15 : (this.type === 'metal' ? 1.5 : 0.5);
         const vx = (this.x - this.oldX) * 0.92, vy = (this.y - this.oldY) * 0.92;
         this.oldX = this.x; this.oldY = this.y;
         this.x += vx; this.y += vy + gravity;
@@ -128,6 +133,23 @@ function redrawWalls() {
     });
 }
 
+function explode(x, y, radius = 80, intensity = 15) {
+    // Crear explosión: convertir gas cercano en fuego y empujar partículas
+    for (let p of particles) {
+        const dx = p.x - x, dy = p.y - y, d = Math.sqrt(dx*dx + dy*dy);
+        if (d < radius) {
+            // Convertir gas y partículas cercanas en fuego
+            if (p.type === 'gas' || p.type === 'water' || p.type === 'ice') { p.type = 'fire'; p.life = 1; }
+            // Empujar hacia afuera
+            if (d > 0) {
+                const force = (1 - d/radius) * intensity;
+                p.x += (dx/d) * force;
+                p.y += (dy/d) * force;
+            }
+        }
+    }
+}
+
 function erase(x, y) {
     particles = particles.filter(p => Math.hypot(p.x - x, p.y - y) > 50);
     const gx = Math.floor(x / GRID_SIZE), gy = Math.floor(y / GRID_SIZE);
@@ -161,9 +183,16 @@ function solve() {
                         const dx = p2.x - p.x, dy = p2.y - p.y, dSq = dx*dx + dy*dy;
                         if(dSq < INTERACTION_R * INTERACTION_R) {
                             const d = Math.sqrt(dSq) || 1;
-                            if (p.type === 'gas' && (p2.type === 'fire' || p2.type === 'lava')) { p.type = 'fire'; p.life = 1; }
+                            if (p.type === 'gas' && (p2.type === 'fire' || p2.type === 'lava' || p2.type === 'plasma')) { explode(p.x, p.y, 100, 18); p.type = 'fire'; p.life = 1; }
+                            if (p.type === 'fire' && p2.type === 'gas') { explode(p2.x, p2.y, 100, 18); p2.type = 'fire'; p2.life = 1; }
+                            if (p.type === 'plasma' && (p2.type === 'water' || p2.type === 'saltwater')) { explode(p.x, p.y, 150, 25); p.type = 'vapor'; p2.type = 'vapor'; p.life = 1; }
+                            if (p.type === 'plasma' && p2.type === 'gas') { explode(p.x, p.y, 120, 22); p.type = 'fire'; p2.type = 'fire'; p.life = 1; }
                             if (p.type === 'fire' && p2.type === 'water') { p.type = 'steam'; p2.type = 'steam'; }
+                            if (p.type === 'fire' && p2.type === 'vapor') { p2.type = 'water'; }
                             if (p.type === 'lava' && p2.type === 'water') { p.type = 'rock'; p2.type = 'steam'; }
+                            if (p.type === 'lava' && p2.type === 'metal') { p2.type = 'lava'; }
+                            if (p.type === 'fire' && p2.type === 'metal') { p2.temp = Math.min(1, p2.temp + 0.3); }
+                            if (p.type === 'saltwater' && p2.type === 'water') { p.type = 'saltwater'; p2.type = 'saltwater'; }
                             const f = (INTERACTION_R - d) / INTERACTION_R * 0.4;
                             p.x -= dx/d * f; p.y -= dy/d * f;
                         }
@@ -183,7 +212,14 @@ function solve() {
                     const dx = p.x - cx, dy = p.y - cy;
                     const d = Math.sqrt(dx*dx + dy*dy) || 0.1;
                     if(d < RADIUS) {
-                        if (block.type === 'hot' && (p.type === 'water' || p.type === 'ice' || p.type === 'gas')) { p.type = 'fire'; p.life = 1; }
+                        if (block.type === 'hot' && p.type === 'gas') { explode(p.x, p.y, 120, 20); p.type = 'fire'; p.life = 1; }
+                        if (block.type === 'hot' && p.type === 'plasma') { explode(p.x, p.y, 180, 30); p.type = 'fire'; p.life = 1; }
+                        if (block.type === 'hot' && p.type === 'vapor') { p.type = 'fire'; p.life = 1; }
+                        if (block.type === 'hot' && p.type === 'saltwater') { explode(p.x, p.y, 100, 15); p.type = 'steam'; p.life = 1; }
+                        if (block.type === 'cold' && p.type === 'vapor') { p.type = 'water'; }
+                        if (block.type === 'cold' && p.type === 'plasma') { p.type = 'gas'; p.life = 1; }
+                        if (block.type === 'cold' && p.type === 'fire') { p.type = 'water'; }
+                        if (block.type === 'hot' && (p.type === 'water' || p.type === 'ice')) { p.type = 'fire'; p.life = 1; }
                         if (p.type === 'acid' && block.type === 'normal' && Math.random() < 0.04) { delete grid[`${wgx+ox},${wgy+oy}`]; redrawWalls(); }
                         
                         // Empujar fuera y matar inercia
@@ -207,7 +243,7 @@ function loop() {
     for(let i=0; i<particles.length; i++) {
         const p = particles[i]; p.update();
         if(p.life <= 0) { particles.splice(i, 1); i--; continue; }
-        const colors = { water:'#0088ff', lava:'#ff4400', fire:'#ffcc00', ice:'#aaddff', nuclear:'#44ff00', gas:'rgba(200, 150, 255, 0.4)', rock:'#555555', acid:'#ccff00', steam:'rgba(220, 220, 255, 0.3)' };
+        const colors = { water:'#0088ff', lava:'#ff4400', fire:'#ffcc00', ice:'#aaddff', nuclear:'#44ff00', gas:'rgba(200, 150, 255, 0.4)', rock:'#555555', acid:'#ccff00', steam:'rgba(220, 220, 255, 0.3)', plasma:'#ff00ff', vapor:'rgba(100, 150, 255, 0.5)', saltwater:'#0055cc', metal:'#888888' };
         ctx.fillStyle = colors[p.type] || '#fff';
         ctx.beginPath(); ctx.arc(p.x, p.y, 16, 0, 7); ctx.fill();
     }
