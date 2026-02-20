@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Magma Lab</title>
-    <link rel="icon" href="magma-lab.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     <script src="scripts/config.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
@@ -22,7 +22,7 @@
 
         /* UI MAGMA LAB */
         #ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; pointer-events: none; }
-        #toggle-btn { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: #ff6600; border: 3px solid #fff; color: white; border-radius: 15px; cursor: pointer; font-size: 30px; pointer-events: auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(255, 102, 0, 0.5); z-index: 1001; }
+        #toggle-btn { position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; background: #ff6600; border: 3px solid #fff; color: white; border-radius: 15px; cursor: pointer; font-size: 30px; pointer-events: auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(255, 102, 0, 0.5); }
         #menu { position: absolute; top: 0; left: -300px; width: 280px; height: 100%; background: rgba(15, 10, 5, 0.98); border-right: 4px solid #ff6600; transition: 0.4s; pointer-events: auto; padding: 20px; box-sizing: border-box; color: white; overflow-y: auto; }
         #menu.open { left: 0; }
         #close-btn { background: #ff3333; border: none; color: white; width: 35px; height: 35px; border-radius: 5px; cursor: pointer; float: right; font-weight: bold; }
@@ -35,7 +35,7 @@
 </head>
 <body>
     <div id="fichero-container"></div>
-    <div id="search-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;">
+    <div id="search-container" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000;">
         <form action="https://www.google.com/search" method="GET" target="_blank" style="background:#fff; padding:12px 25px; border-radius:50px; display:flex; width:450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
             <input type="text" name="q" placeholder="Search Google..." style="flex:1; border:none; outline:none; font-size:16px; background:transparent;">
             <button type="submit" style="background:#4285f4; color:white; border:none; border-radius:50px; padding:8px 20px; cursor:pointer; font-weight:bold;">Search</button>
@@ -137,7 +137,7 @@ function erase(x, y) {
 }
 
 function solve() {
-    if (particles.length < 6500) {
+    if (particles.length < 3000) {
         spawners.forEach(s => { if (Math.random() < 0.4) particles.push(new Particle(s.x, s.y + 10, s.type)); });
     }
     spatialHash.clear();
@@ -201,7 +201,7 @@ function solve() {
 }
 
 function loop() {
-    if (isDrawing && !['wall','coldWall','hotWall','eraser','blackhole'].includes(currentTool) && !currentTool.startsWith('gen_') && particles.length < 6500) {
+    if(isDrawing && !['wall','coldWall','hotWall','eraser','blackhole'].includes(currentTool) && !currentTool.startsWith('gen_') && particles.length < 3000) {
         for(let i=0; i<3; i++) particles.push(new Particle(mx + Math.random()*8, my + Math.random()*8, currentTool));
     }
     solve();
