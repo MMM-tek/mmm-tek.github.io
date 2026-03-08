@@ -1,3 +1,5 @@
+remote_theme: pages-themes/slate@v0.2.0
 title: MMM-tek
-description: MakeCode Arcade Portal
-# No añadas ninguna línea de "theme" o "remote_theme" aquí.
+description: " " # Esto limpia el espacio bajo el título
+show_downloads: false
+google_analytics: 
