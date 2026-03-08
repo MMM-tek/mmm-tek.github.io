@@ -6,7 +6,7 @@
 ---
 
 ## GAME ZONE
-&nbsp; [Arcade Minecraft](https://mmm-tek.github.io/arcade-minecraft)
+&nbsp; [Arcade Minecraft](/arcade-minecraft)
 
 ---
 
