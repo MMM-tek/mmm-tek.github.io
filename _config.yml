@@ -1,5 +1,4 @@
 remote_theme: pages-themes/slate@v0.2.0
 title: MMM-tek
-description: " " # Esto limpia el espacio bajo el título
+description: "" # Dejar esto vacío elimina la segunda fila del banner
 show_downloads: false
-google_analytics: 
