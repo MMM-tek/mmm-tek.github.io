@@ -1,9 +1,14 @@
 # MMM-tek
 
+## MICROSOFT
+&nbsp; [MakeCode](/Microsoft/makecode)
+
+---
+
 ## UTILITY
-&nbsp; [2FA System to LogIN](https://mmm-tek.github.io/2FA)
+&nbsp; [2FA System to LogIN](/2FA)
 
 ---
 
 ## SEARCH ENGINE
-&nbsp; [Search](https://mmm-tek.github.io/search?token=true)
+&nbsp; [Search](/search?token=true)
