@@ -7,6 +7,7 @@
 
 ## GAME ZONE
 &nbsp; [Arcade Minecraft](/arcade-minecraft)
+&nbsp; [Geometry](/geometry)
 
 ---
 
