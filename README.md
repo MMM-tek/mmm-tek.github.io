@@ -12,3 +12,8 @@
 
 ## SEARCH ENGINE
 &nbsp; [Search](/search?token=true)
+
+---
+
+## DISGUISE MODE
+&nbsp; [Disguise Classroom Edition](/Disguise)
