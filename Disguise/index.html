@@ -2,304 +2,162 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chrome Simulator - mmm-tek</title>
+    <title>Chrome Simulator - Fixed Navigation</title>
     <style>
         :root {
             --chrome-bg: #dee1e6;
             --tab-active: #ffffff;
             --tab-inactive: #bdc1c6;
             --toolbar-bg: #ffffff;
-            --button-hover: #e8eaed;
-            --address-bar: #f1f3f4;
         }
 
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--chrome-bg);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        body { margin: 0; font-family: sans-serif; background: var(--chrome-bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Tab System */
-        .tab-bar {
-            display: flex;
-            align-items: flex-end;
-            padding: 8px 8px 0 8px;
-            gap: 4px;
-            background: var(--chrome-bg);
-            user-select: none;
+        /* Tabs */
+        .tab-bar { display: flex; align-items: flex-end; padding: 8px 8px 0; gap: 4px; background: var(--chrome-bg); }
+        .tab { 
+            background: var(--tab-inactive); padding: 8px 12px; border-radius: 8px 8px 0 0; 
+            min-width: 120px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; 
         }
+        .tab.active { background: var(--tab-active); }
+        .tab-close { margin-left: 10px; border-radius: 50%; width: 16px; height: 16px; text-align: center; line-height: 16px; }
+        .tab-close:hover { background: #bbb; }
+        .new-tab-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 10px; }
 
-        .tab {
-            background: var(--tab-inactive);
-            padding: 8px 16px;
-            border-radius: 8px 8px 0 0;
-            min-width: 140px;
-            max-width: 200px;
-            font-size: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            position: relative;
-            color: #3c4043;
-            transition: background 0.2s;
+        /* Toolbar */
+        .toolbar { background: var(--toolbar-bg); padding: 5px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ccc; }
+        .nav-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #5f6368; padding: 5px; border-radius: 50%; }
+        .nav-btn:disabled { color: #ccc; cursor: default; }
+        .address-bar { 
+            flex-grow: 1; background: #f1f3f4; border-radius: 20px; padding: 5px 15px; 
+            display: flex; align-items: center; font-size: 14px; 
         }
+        #url-input { border: none; background: transparent; width: 100%; outline: none; }
+        .domain-lock { color: #5f6368; font-weight: bold; }
 
-        .tab.active {
-            background: var(--tab-active);
-            color: #202124;
-            z-index: 2;
-        }
-
-        .tab-close {
-            margin-left: 10px;
-            font-size: 16px;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .tab-close:hover {
-            background: #d1d4d7;
-        }
-
-        .new-tab-btn {
-            background: none;
-            border: none;
-            font-size: 22px;
-            cursor: pointer;
-            color: #5f6368;
-            padding: 0 12px 4px 12px;
-        }
-
-        /* Navigation Toolbar */
-        .toolbar {
-            background: var(--toolbar-bg);
-            padding: 4px 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid #dcdee1;
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .nav-btn {
-            background: transparent;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #5f6368;
-            font-size: 20px;
-        }
-
-        .nav-btn:hover {
-            background: var(--button-hover);
-        }
-
-        /* Address Bar Area */
-        .address-bar-container {
-            flex-grow: 1;
-            background: var(--address-bar);
-            border-radius: 30px;
-            padding: 6px 18px;
-            display: flex;
-            align-items: center;
-            border: 1px solid transparent;
-            transition: box-shadow 0.2s;
-        }
-
-        .address-bar-container:focus-within {
-            background: #fff;
-            box-shadow: 0 0 0 2px #8ab4f8;
-        }
-
-        .lock-icon {
-            font-size: 12px;
-            margin-right: 8px;
-            color: #5f6368;
-        }
-
-        .domain-lock {
-            color: #5f6368;
-            font-size: 14px;
-            margin-right: 1px;
-            white-space: nowrap;
-        }
-
-        #url-input {
-            border: none;
-            background: transparent;
-            width: 100%;
-            outline: none;
-            font-size: 14px;
-            color: #202124;
-        }
-
-        .star-icon {
-            color: #5f6368;
-            cursor: pointer;
-            margin-left: 8px;
-            font-size: 18px;
-        }
-
-        /* Viewport */
-        #browser-content {
-            flex-grow: 1;
-            background: white;
-            position: relative;
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: none;
-        }
-
-        iframe.active {
-            display: block;
-        }
+        /* Content */
+        #viewport { flex-grow: 1; background: white; }
+        iframe { width: 100%; height: 100%; border: none; display: none; }
+        iframe.active { display: block; }
     </style>
 </head>
 <body>
 
-    <!-- Chrome Tabs -->
-    <div class="tab-bar" id="tab-bar">
-        <button class="new-tab-btn" onclick="addNewTab()" title="New Tab">+</button>
-    </div>
+<div class="tab-bar" id="tab-bar">
+    <button class="new-tab-btn" onclick="createNewTab()">+</button>
+</div>
 
-    <!-- Navigation & Address Bar -->
-    <div class="toolbar">
-        <div class="nav-buttons">
-            <button class="nav-btn" onclick="navBack()" title="Back">←</button>
-            <button class="nav-btn" onclick="navForward()" title="Forward">→</button>
-            <button class="nav-btn" onclick="navReload()" title="Reload">↻</button>
-        </div>
+<div class="toolbar">
+    <button class="nav-btn" id="back-btn" onclick="goBack()">←</button>
+    <button class="nav-btn" onclick="reloadTab()">↻</button>
+    <div class="address-bar">
+        <span class="domain-lock">https://mmm-tek.github.io</span>
+        <input type="text" id="url-input" placeholder="URL" onkeypress="checkEnter(event)">
+    </div>
+</div>
+
+<div id="viewport"></div>
+
+<script>
+    const DOMAIN = "https://mmm-tek.github.io";
+    let tabs = {}; // Store tab data: { id: { history: [], currentIndex: -1 } }
+    let activeTabId = null;
+
+    function createNewTab() {
+        const id = 'tab-' + Date.now();
+        tabs[id] = { history: [DOMAIN], currentIndex: 0 };
+
+        // Create Tab UI
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab';
+        tabEl.id = 'btn-' + id;
+        tabEl.innerHTML = `<span>mmm-tek</span> <span class="tab-close" onclick="closeTab(event, '${id}')">×</span>`;
+        tabEl.onclick = () => switchTab(id);
+        document.getElementById('tab-bar').insertBefore(tabEl, document.querySelector('.new-tab-btn'));
+
+        // Create Iframe
+        const ifr = document.createElement('iframe');
+        ifr.id = 'ifr-' + id;
+        ifr.src = DOMAIN;
+        document.getElementById('viewport').appendChild(ifr);
+
+        switchTab(id);
+    }
+
+    function switchTab(id) {
+        activeTabId = id;
+        document.querySelectorAll('.tab, iframe').forEach(el => el.classList.remove('active'));
         
-        <div class="address-bar-container">
-            <span class="lock-icon">🔒</span>
-            <span class="domain-lock">https://mmm-tek.github.io</span>
-            <input type="text" id="url-input" placeholder="URL" onkeypress="handleUrlEnter(event)">
-            <span class="star-icon" title="Bookmark this page">☆</span>
-        </div>
-    </div>
+        document.getElementById('btn-' + id).classList.add('active');
+        document.getElementById('ifr-' + id).classList.add('active');
 
-    <!-- Page Content -->
-    <div id="browser-content">
-    </div>
+        const currentPath = tabs[id].history[tabs[id].currentIndex].replace(DOMAIN, "");
+        document.getElementById('url-input').value = currentPath;
+        updateNavButtons();
+    }
 
-    <script>
-        let tabCount = 0;
-        const domain = "https://mmm-tek.github.io";
+    function closeTab(e, id) {
+        e.stopPropagation();
+        document.getElementById('btn-' + id).remove();
+        document.getElementById('ifr-' + id).remove();
+        delete tabs[id];
 
-        function addNewTab() {
-            tabCount++;
-            const tabId = `tab-${tabCount}`;
-            
-            // Create Tab
-            const tabBar = document.getElementById('tab-bar');
-            const newTabBtn = document.querySelector('.new-tab-btn');
-            
-            const tab = document.createElement('div');
-            tab.className = 'tab';
-            tab.id = `btn-${tabId}`;
-            tab.innerHTML = `
-                <span>mmm-tek</span>
-                <span class="tab-close" onclick="closeTab(event, '${tabId}')">×</span>
-            `;
-            tab.onclick = () => switchTab(tabId);
-            tabBar.insertBefore(tab, newTabBtn);
+        const remaining = Object.keys(tabs);
+        if (remaining.length > 0) {
+            switchTab(remaining[remaining.length - 1]);
+        } else {
+            createNewTab();
+        }
+    }
 
-            // Create Iframe
-            const content = document.getElementById('browser-content');
-            const iframe = document.createElement('iframe');
-            iframe.id = tabId;
-            iframe.src = domain;
-            content.appendChild(iframe);
+    function checkEnter(e) {
+        if (e.key === 'Enter') {
+            const path = document.getElementById('url-input').value;
+            const fullUrl = DOMAIN + path;
+            navigateTo(fullUrl);
+        }
+    }
 
-            switchTab(tabId);
+    function navigateTo(url) {
+        if (!url.startsWith(DOMAIN)) {
+            const confirmLeave = confirm("This URL is outside mmm-tek.github.io. Do you want to open it in a real new window?");
+            if (confirmLeave) window.open(url, '_blank');
+            return;
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('iframe').forEach(f => f.classList.remove('active'));
+        const tab = tabs[activeTabId];
+        // Remove forward history if we are in the middle of it
+        tab.history = tab.history.slice(0, tab.currentIndex + 1);
+        tab.history.push(url);
+        tab.currentIndex++;
+        
+        document.getElementById('ifr-' + activeTabId).src = url;
+        updateNavButtons();
+    }
 
-            const activeTabBtn = document.getElementById(`btn-${tabId}`);
-            const activeIframe = document.getElementById(tabId);
-
-            if(activeTabBtn && activeIframe) {
-                activeTabBtn.classList.add('active');
-                activeIframe.classList.add('active');
-                
-                // Sync URL input
-                const currentPath = activeIframe.src.replace(domain, "");
-                document.getElementById('url-input').value = (currentPath === "undefined" || currentPath === domain) ? "" : currentPath;
-            }
+    function goBack() {
+        const tab = tabs[activeTabId];
+        if (tab.currentIndex > 0) {
+            tab.currentIndex--;
+            const prevUrl = tab.history[tab.currentIndex];
+            document.getElementById('ifr-' + activeTabId).src = prevUrl;
+            document.getElementById('url-input').value = prevUrl.replace(DOMAIN, "");
+            updateNavButtons();
         }
+    }
 
-        function closeTab(event, tabId) {
-            event.stopPropagation();
-            document.getElementById(`btn-${tabId}`).remove();
-            document.getElementById(tabId).remove();
+    function reloadTab() {
+        const ifr = document.getElementById('ifr-' + activeTabId);
+        ifr.src = ifr.src;
+    }
 
-            const remainingTabs = document.querySelectorAll('.tab');
-            if (remainingTabs.length > 0) {
-                const lastTabId = remainingTabs[remainingTabs.length - 1].id.replace('btn-', '');
-                switchTab(lastTabId);
-            } else {
-                addNewTab(); 
-            }
-        }
+    function updateNavButtons() {
+        document.getElementById('back-btn').disabled = (tabs[activeTabId].currentIndex <= 0);
+    }
 
-        // Navigation
-        function navBack() {
-            try {
-                const activeIframe = document.querySelector('iframe.active');
-                activeIframe.contentWindow.history.back();
-            } catch(e) { console.log("Navigation restricted by browser security."); }
-        }
+    // Initialize
+    createNewTab();
+</script>
 
-        function navForward() {
-            try {
-                const activeIframe = document.querySelector('iframe.active');
-                activeIframe.contentWindow.history.forward();
-            } catch(e) { console.log("Navigation restricted by browser security."); }
-        }
-
-        function navReload() {
-            const activeIframe = document.querySelector('iframe.active');
-            if (activeIframe) activeIframe.src = activeIframe.src;
-        }
-
-        function handleUrlEnter(e) {
-            if (e.key === 'Enter') {
-                const path = document.getElementById('url-input').value;
-                const activeIframe = document.querySelector('iframe.active');
-                if (activeIframe) {
-                    activeIframe.src = domain + path;
-                }
-            }
-        }
-
-        // Initial Tab
-        addNewTab();
-    </script>
 </body>
 </html>
