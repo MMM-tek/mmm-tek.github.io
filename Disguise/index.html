@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chrome Simulator - Domain Lock & Anti-Error</title>
+    <title>Chrome Simulator - Pro Domain Lock</title>
     <style>
         :root {
             --chrome-bg: #dee1e6;
@@ -11,28 +11,31 @@
             --toolbar-bg: #ffffff;
         }
 
-        body { margin: 0; font-family: sans-serif; background: var(--chrome-bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--chrome-bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Tab Bar */
-        .tab-bar { display: flex; align-items: flex-end; padding: 8px 8px 0; gap: 4px; background: var(--chrome-bg); }
+        /* Tabs */
+        .tab-bar { display: flex; align-items: flex-end; padding: 8px 8px 0; gap: 4px; background: var(--chrome-bg); user-select: none; }
         .tab { 
-            background: var(--tab-inactive); padding: 8px 12px; border-radius: 8px 8px 0 0; 
-            min-width: 120px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; 
+            background: var(--tab-inactive); padding: 8px 15px; border-radius: 8px 8px 0 0; 
+            min-width: 140px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #3c4043;
         }
-        .tab.active { background: var(--tab-active); }
-        .tab-close { margin-left: 10px; border-radius: 50%; width: 16px; height: 16px; text-align: center; line-height: 16px; }
+        .tab.active { background: var(--tab-active); color: #202124; border-bottom: 1px solid white; }
+        .tab-close { margin-left: 10px; border-radius: 50%; width: 18px; height: 18px; text-align: center; line-height: 18px; }
         .tab-close:hover { background: #bbb; }
-        .new-tab-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 10px; }
+        .new-tab-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 0 12px 5px; color: #5f6368; }
 
         /* Toolbar */
-        .toolbar { background: var(--toolbar-bg); padding: 5px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ccc; }
-        .nav-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #5f6368; padding: 5px; border-radius: 50%; }
+        .toolbar { background: var(--toolbar-bg); padding: 5px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #dcdee1; }
+        .nav-buttons { display: flex; gap: 8px; }
+        .nav-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .nav-btn:hover { background: #f1f3f4; }
+
         .address-bar { 
-            flex-grow: 1; background: #f1f3f4; border-radius: 20px; padding: 5px 15px; 
-            display: flex; align-items: center; font-size: 14px; 
+            flex-grow: 1; background: #f1f3f4; border-radius: 20px; padding: 6px 18px; 
+            display: flex; align-items: center; font-size: 14px;
         }
-        #url-input { border: none; background: transparent; width: 100%; outline: none; }
-        .domain-lock { color: #5f6368; font-weight: bold; margin-right: 2px; }
+        #url-input { border: none; background: transparent; width: 100%; outline: none; margin-left: 5px; color: #202124; }
+        .domain-lock { color: #5f6368; font-weight: 500; white-space: nowrap; }
 
         /* Viewport */
         #viewport { flex-grow: 1; background: white; }
@@ -47,11 +50,13 @@
 </div>
 
 <div class="toolbar">
-    <button class="nav-btn" onclick="goBack()">←</button>
-    <button class="nav-btn" onclick="reloadTab()">↻</button>
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="goBack()" title="Back">←</button>
+        <button class="nav-btn" onclick="reloadTab()" title="Reload">↻</button>
+    </div>
     <div class="address-bar">
         <span class="domain-lock">https://mmm-tek.github.io</span>
-        <input type="text" id="url-input" placeholder="URL" onkeypress="checkEnter(event)">
+        <input type="text" id="url-input" placeholder="URL" onkeypress="handleEnter(event)">
     </div>
 </div>
 
@@ -59,7 +64,7 @@
 
 <script>
     const DOMAIN = "https://mmm-tek.github.io";
-    let tabs = {};
+    let tabs = {}; 
     let activeTabId = null;
 
     function createNewTab() {
@@ -69,49 +74,47 @@
         const tabEl = document.createElement('div');
         tabEl.className = 'tab';
         tabEl.id = 'btn-' + id;
-        tabEl.innerHTML = `<span>mmm-tek</span> <span class="tab-close" onclick="closeTab(event, '${id}')">×</span>`;
+        tabEl.innerHTML = `<span>mmm-tek</span><span class="tab-close" onclick="closeTab(event, '${id}')">×</span>`;
         tabEl.onclick = () => switchTab(id);
         document.getElementById('tab-bar').insertBefore(tabEl, document.querySelector('.new-tab-btn'));
 
         const ifr = document.createElement('iframe');
         ifr.id = 'ifr-' + id;
         ifr.src = DOMAIN;
-        // Sandbox para evitar que el iframe rompa la página principal
-        ifr.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups');
+        // Sandbox restringido para evitar que el iframe navegue fuera por su cuenta
+        ifr.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-modals');
         document.getElementById('viewport').appendChild(ifr);
 
         switchTab(id);
     }
 
-    function checkEnter(e) {
+    function handleEnter(e) {
         if (e.key === 'Enter') {
-            const path = document.getElementById('url-input').value.trim();
-            
-            // Lógica de detección: si contiene un dominio diferente
-            if (path.includes("://") || path.includes("forum.") || path.includes(".com")) {
-                const targetUrl = path.startsWith("http") ? path : "https://" + path;
+            const input = document.getElementById('url-input').value.trim();
+            const isExternal = input.startsWith("http") || input.includes("www.") || input.includes(".com") || input.includes(".org");
+
+            if (isExternal) {
+                const targetUrl = input.startsWith("http") ? input : "https://" + input;
                 
-                // Si la URL no empieza por nuestro dominio bloqueado
+                // Si NO pertenece a tu dominio, abrir en pestaña real DE INMEDIATO
                 if (!targetUrl.startsWith(DOMAIN)) {
-                    alert("External domain detected (like MakeCode). Opening in a new real tab to avoid connection errors.");
-                    window.open(targetUrl, '_blank');
-                    // Resetear input al valor actual del historial
+                    window.open(targetUrl, '_blank'); // Acción directa del usuario (Enter)
+                    // Restaurar la URL anterior en el input
                     document.getElementById('url-input').value = tabs[activeTabId].history[tabs[activeTabId].currentIndex].replace(DOMAIN, "");
                     return;
                 }
             }
             
-            const fullUrl = DOMAIN + path;
-            navigateTo(fullUrl);
+            // Si es interno, navegar normalmente
+            navigate(DOMAIN + input);
         }
     }
 
-    function navigateTo(url) {
+    function navigate(url) {
         const tab = tabs[activeTabId];
         tab.history = tab.history.slice(0, tab.currentIndex + 1);
         tab.history.push(url);
         tab.currentIndex++;
-        
         document.getElementById('ifr-' + activeTabId).src = url;
     }
 
@@ -120,9 +123,8 @@
         document.querySelectorAll('.tab, iframe').forEach(el => el.classList.remove('active'));
         document.getElementById('btn-' + id).classList.add('active');
         document.getElementById('ifr-' + id).classList.add('active');
-
         const currentPath = tabs[id].history[tabs[id].currentIndex].replace(DOMAIN, "");
-        document.getElementById('url-input').value = currentPath;
+        document.getElementById('url-input').value = (currentPath === DOMAIN) ? "" : currentPath;
     }
 
     function closeTab(e, id) {
@@ -130,8 +132,8 @@
         document.getElementById('btn-' + id).remove();
         document.getElementById('ifr-' + id).remove();
         delete tabs[id];
-        const remaining = Object.keys(tabs);
-        if (remaining.length > 0) switchTab(remaining[remaining.length - 1]);
+        const keys = Object.keys(tabs);
+        if (keys.length > 0) switchTab(keys[keys.length - 1]);
         else createNewTab();
     }
 
@@ -152,6 +154,5 @@
 
     createNewTab();
 </script>
-
 </body>
 </html>
