@@ -2,30 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chrome Simulator - Anti Block Edition</title>
+    <title>Chrome Simulator - Ultimate Anti-Block</title>
     <style>
         :root { --bg: #dee1e6; --tab: #ffffff; --toolbar: #ffffff; --text: #202124; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Navigation Bar */
+        /* Tab Bar */
         .tab-bar { display: flex; align-items: flex-end; padding: 8px 8px 0; gap: 4px; background: var(--bg); }
-        .tab { background: #bdc1c6; padding: 8px 15px; border-radius: 8px 8px 0 0; min-width: 130px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .tab.active { background: var(--tab); font-weight: 500; }
-        .tab-close { margin-left: 10px; width: 16px; height: 16px; text-align: center; border-radius: 50%; }
+        .tab { background: #bdc1c6; padding: 8px 15px; border-radius: 8px 8px 0 0; min-width: 130px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: none; }
+        .tab.active { background: var(--tab); font-weight: 500; border-bottom: 1px solid white; }
+        .tab-close { margin-left: 10px; width: 18px; height: 18px; text-align: center; border-radius: 50%; font-size: 14px; }
         .tab-close:hover { background: #e8eaed; }
-        .new-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 10px 5px; color: #5f6368; }
+        .new-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 0 12px 5px; color: #5f6368; }
 
         /* Toolbar */
         .toolbar { background: var(--toolbar); padding: 5px 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #dcdee1; }
-        .nav-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #5f6368; border-radius: 50%; width: 30px; height: 30px; }
+        .nav-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
         .nav-btn:hover { background: #f1f3f4; }
         
-        .address-bar { flex-grow: 1; background: #f1f3f4; border-radius: 20px; padding: 6px 18px; display: flex; align-items: center; font-size: 14px; }
-        #url-input { border: none; background: transparent; width: 100%; outline: none; margin-left: 4px; }
-        .lock { font-size: 12px; margin-right: 6px; color: #5f6368; }
-        .prefix { color: #5f6368; font-weight: bold; }
+        .address-bar { flex-grow: 1; background: #f1f3f4; border-radius: 20px; padding: 6px 18px; display: flex; align-items: center; font-size: 14px; border: 1px solid transparent; }
+        .address-bar:focus-within { background: #fff; border-color: #8ab4f8; }
+        #url-input { border: none; background: transparent; width: 100%; outline: none; margin-left: 5px; color: var(--text); }
+        .prefix { color: #5f6368; font-weight: bold; white-space: nowrap; }
 
-        /* Frame Area */
+        /* External Button */
+        .external-btn { background: #1a73e8; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-weight: 500; white-space: nowrap; }
+        .external-btn:hover { background: #1765cc; }
+
+        /* Viewport */
         #viewport { flex-grow: 1; background: #fff; position: relative; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         iframe.active { display: block; }
@@ -33,18 +37,21 @@
 </head>
 <body>
 
-<div class="tab-bar" id="tabs">
+<div class="tab-bar" id="tabs-container">
     <button class="new-btn" onclick="addTab()">+</button>
 </div>
 
 <div class="toolbar">
-    <button class="nav-btn" onclick="navHistory(-1)">←</button>
-    <button class="nav-btn" onclick="reload()">↻</button>
-    <div class="address-bar">
-        <span class="lock">🔒</span>
-        <span class="prefix">https://mmm-tek.github.io</span>
-        <input type="text" id="url-input" placeholder="URL" onkeydown="if(event.key==='Enter') handleURL()">
+    <div style="display:flex; gap:5px;">
+        <button class="nav-btn" onclick="navBack()">←</button>
+        <button class="nav-btn" onclick="reload()">↻</button>
     </div>
+    <div class="address-bar">
+        <span style="font-size:12px; margin-right:5px;">🔒</span>
+        <span class="prefix">https://mmm-tek.github.io</span>
+        <input type="text" id="url-input" placeholder="URL" onkeydown="if(event.key==='Enter') handleGo()">
+    </div>
+    <button class="external-btn" onclick="openOutside()" title="Open in real browser if page fails">Open Outside ↗</button>
 </div>
 
 <div id="viewport"></div>
@@ -58,46 +65,50 @@
         const id = 't' + Date.now();
         tabs[id] = { history: [DOMAIN], index: 0 };
         
-        const btn = document.createElement('div');
+        const btn = document.createElement('button');
         btn.className = 'tab';
         btn.id = 'btn-' + id;
         btn.innerHTML = `<span>mmm-tek</span><span class="tab-close" onclick="closeTab(event,'${id}')">×</span>`;
         btn.onclick = () => selectTab(id);
-        document.getElementById('tabs').insertBefore(btn, document.querySelector('.new-btn'));
+        document.getElementById('tabs-container').insertBefore(btn, document.querySelector('.new-btn'));
 
         const ifr = document.createElement('iframe');
         ifr.id = 'ifr-' + id;
         ifr.src = DOMAIN;
-        // Sandbox configurado para forzar que los clics externos se abran fuera si intentan romper el frame
-        ifr.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+        // La clave es "allow-popups-to-escape-sandbox"
+        // Esto permite que si un enlace interno va a MakeCode, el navegador lo abra FUERA del simulador.
+        ifr.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals');
         document.getElementById('viewport').appendChild(ifr);
 
         selectTab(id);
     }
 
-    function handleURL() {
-        const input = document.getElementById('url-input').value.trim();
-        
-        // DETECCIÓN: Si la URL es externa (contiene .com, .net, http, etc. y NO es nuestro dominio)
-        const isExternal = (input.includes('.') || input.includes('://')) && !input.includes('mmm-tek.github.io');
+    function handleGo() {
+        const val = document.getElementById('url-input').value.trim();
+        const isFullUrl = val.includes('.') || val.includes('://');
 
-        if (isExternal) {
-            let target = input.startsWith('http') ? input : 'https://' + input;
-            alert("Redirecting to external site in a new real tab to prevent 'Connection Refused' error.");
-            window.open(target, '_blank'); // Abre en el navegador real
-            
-            // Limpia la barra de direcciones volviendo a la ruta interna
+        // Si el usuario escribe algo que NO es de mmm-tek, lo abrimos fuera directamente
+        if (isFullUrl && !val.includes('mmm-tek.github.io')) {
+            const external = val.startsWith('http') ? val : 'https://' + val;
+            window.open(external, '_blank');
+            // Reset input
             document.getElementById('url-input').value = tabs[activeId].history[tabs[activeId].index].replace(DOMAIN, "");
             return;
         }
 
-        // Si es interna, navega normal
-        const fullUrl = DOMAIN + input;
-        const tab = tabs[activeId];
-        tab.history = tab.history.slice(0, tab.index + 1);
-        tab.history.push(fullUrl);
-        tab.index++;
-        document.getElementById('ifr-' + activeId).src = fullUrl;
+        // Navegación interna segura
+        const full = DOMAIN + val;
+        const t = tabs[activeId];
+        t.history = t.history.slice(0, t.index + 1);
+        t.history.push(full);
+        t.index++;
+        document.getElementById('ifr-' + activeId).src = full;
+    }
+
+    function openOutside() {
+        const currentIfr = document.getElementById('ifr-' + activeId);
+        const path = document.getElementById('url-input').value;
+        window.open(DOMAIN + path, '_blank');
     }
 
     function selectTab(id) {
@@ -105,7 +116,6 @@
         document.querySelectorAll('.tab, iframe').forEach(el => el.classList.remove('active'));
         document.getElementById('btn-' + id).classList.add('active');
         document.getElementById('ifr-' + id).classList.add('active');
-        
         const path = tabs[id].history[tabs[id].index].replace(DOMAIN, "");
         document.getElementById('url-input').value = (path === DOMAIN) ? "" : path;
     }
@@ -120,9 +130,9 @@
         else addTab();
     }
 
-    function navHistory(dir) {
+    function navBack() {
         const t = tabs[activeId];
-        if (dir === -1 && t.index > 0) {
+        if (t.index > 0) {
             t.index--;
             document.getElementById('ifr-' + activeId).src = t.history[t.index];
             selectTab(activeId);
