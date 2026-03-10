@@ -1,30 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Classroom</title>
     <link rel="icon" type="image/png" href="https://mmm-tek.github.io/classroom.png">
     <style>
-        :root { --chrome-bg: #dee1e6; --tab-active: #ffffff; --toolbar-bg: #ffffff; }
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--chrome-bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { 
+            /* Modo Claro (Default) */
+            --bg-color: #dee1e6; 
+            --tab-active: #ffffff; 
+            --tab-inactive: #bdc1c6;
+            --toolbar-bg: #ffffff; 
+            --text-color: #202124;
+            --input-bg: #f1f3f4;
+            --border-color: #dcdee1;
+            --accent-color: #5f6368;
+        }
+
+        [data-theme="dark"] {
+            /* Modo Oscuro */
+            --bg-color: #202124; 
+            --tab-active: #35363a; 
+            --tab-inactive: #292a2d;
+            --toolbar-bg: #35363a; 
+            --text-color: #e8eaed;
+            --input-bg: #202124;
+            --border-color: #414245;
+            --accent-color: #9aa0a6;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background: var(--bg-color); 
+            color: var(--text-color);
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            transition: background 0.3s;
+        }
 
         /* Barra de Pestañas */
-        .tab-bar { display: flex; align-items: flex-end; padding: 8px 8px 0; gap: 4px; background: var(--chrome-bg); }
-        .tab { background: #bdc1c6; padding: 8px 15px; border-radius: 8px 8px 0 0; min-width: 130px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: none; }
-        .tab.active { background: var(--tab-active); border-bottom: 1px solid white; }
+        .tab-bar { display: flex; align-items: flex-end; padding: 8px 8px 0; gap: 4px; background: var(--bg-color); }
+        .tab { 
+            background: var(--tab-inactive); 
+            color: var(--text-color);
+            padding: 8px 15px; 
+            border-radius: 8px 8px 0 0; 
+            min-width: 130px; 
+            font-size: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            border: none; 
+            transition: background 0.2s;
+        }
+        .tab.active { background: var(--tab-active); border-bottom: 1px solid var(--tab-active); }
         .tab-close { margin-left: 10px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .tab-close:hover { background: #e8eaed; }
-        .new-tab { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 10px 5px; color: #5f6368; }
+        .tab-close:hover { background: rgba(0,0,0,0.1); }
+        .new-tab { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 10px 5px; color: var(--accent-color); }
 
         /* Herramientas */
-        .toolbar { background: var(--toolbar-bg); padding: 5px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #dcdee1; }
-        .nav-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368; width: 32px; height: 32px; border-radius: 50%; }
-        .nav-btn:hover { background: #f1f3f4; }
+        .toolbar { background: var(--toolbar-bg); padding: 5px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color); }
+        .nav-btn { 
+            background: none; border: none; font-size: 18px; cursor: pointer; color: var(--accent-color); 
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+        }
+        .nav-btn:hover { background: rgba(128, 128, 128, 0.15); }
         
-        .address-bar { flex-grow: 1; background: #f1f3f4; border-radius: 20px; padding: 6px 18px; display: flex; align-items: center; font-size: 14px; }
-        #url-input { border: none; background: transparent; width: 100%; outline: none; margin-left: 5px; color: #202124; }
+        .address-bar { flex-grow: 1; background: var(--input-bg); border-radius: 20px; padding: 6px 18px; display: flex; align-items: center; font-size: 14px; }
+        #url-input { border: none; background: transparent; width: 100%; outline: none; margin-left: 5px; color: var(--text-color); }
         .lock { font-size: 12px; margin-right: 5px; }
-        .domain { color: #5f6368; font-weight: 500; white-space: nowrap; }
+        .domain { color: var(--accent-color); font-weight: 500; white-space: nowrap; margin-right: 4px; }
 
         /* Contenido */
         #viewport { flex-grow: 1; background: white; position: relative; }
@@ -39,13 +89,15 @@
 </div>
 
 <div class="toolbar">
-    <button class="nav-btn" onclick="goBack()" title="Back">←</button>
-    <button class="nav-btn" onclick="reload()" title="Reload">↻</button>
+    <button class="nav-btn" onclick="goBack()" title="Atrás">←</button>
+    <button class="nav-btn" onclick="reload()" title="Recargar">↻</button>
     <div class="address-bar">
         <span class="lock">🔒</span>
-        <span class="domain">https://mmm-tek.github.io</span>
-        <input type="text" id="url-input" placeholder="URL" onkeydown="if(event.key==='Enter') navigate()">
+        <span class="domain">mmm-tek.github.io</span>
+        <input type="text" id="url-input" placeholder="Escribe una URL o ruta..." onkeydown="if(event.key==='Enter') navigate()">
     </div>
+    <button class="nav-btn" onclick="openExternal()" title="Abrir en pestaña nueva">↗</button>
+    <button class="nav-btn" onclick="toggleDarkMode()" title="Cambiar Tema">🌓</button>
 </div>
 
 <div id="viewport"></div>
@@ -54,53 +106,66 @@
     const DOMAIN = "https://mmm-tek.github.io";
     let activeId = null;
 
+    // Cargar Modo Oscuro al iniciar
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+    }
+
+    function toggleDarkMode() {
+        if (document.body.hasAttribute('data-theme')) {
+            document.body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
     function addTab() {
         const id = 't' + Date.now();
         
-        // Botón de pestaña
         const btn = document.createElement('button');
         btn.className = 'tab';
         btn.id = 'btn-' + id;
-        btn.innerHTML = `<span>mmm-tek</span><span class="tab-close" onclick="closeTab(event,'${id}')">×</span>`;
+        btn.innerHTML = `<span>Nueva Pestaña</span><span class="tab-close" onclick="closeTab(event,'${id}')">×</span>`;
         btn.onclick = () => selectTab(id);
         document.getElementById('tabs').insertBefore(btn, document.querySelector('.new-tab'));
 
-        // Iframe
         const ifr = document.createElement('iframe');
         ifr.id = 'ifr-' + id;
         ifr.src = DOMAIN;
-        // Sandbox que permite navegar internamente pero bloquea errores de dominio
-        ifr.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+        // Sandbox configurado para permitir navegación
+        ifr.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups');
         document.getElementById('viewport').appendChild(ifr);
 
         selectTab(id);
     }
 
+    function getFullUrl(input) {
+        if (!input) return DOMAIN;
+        if (input.startsWith('http://') || input.startsWith('https://')) return input;
+        // Si tiene un punto, lo tratamos como dominio externo, si no, como ruta interna
+        return input.includes('.') ? 'https://' + input : DOMAIN + (input.startsWith('/') ? '' : '/') + input;
+    }
+
     function navigate() {
         const input = document.getElementById('url-input').value.trim();
-        const fullUrl = input.includes('://') || input.includes('www.') ? input : DOMAIN + input;
-
-        // Si la URL no es de mmm-tek, abrir en pestaña real
-        if (!fullUrl.startsWith(DOMAIN)) {
-            window.open(fullUrl.startsWith('http') ? fullUrl : 'https://' + fullUrl, '_blank');
-            // Restauramos la URL interna para no confundir
-            document.getElementById('url-input').value = "";
-            return;
-        }
-
+        const targetUrl = getFullUrl(input);
         const ifr = document.getElementById('ifr-' + activeId);
-        ifr.src = fullUrl;
+        ifr.src = targetUrl;
+    }
+
+    function openExternal() {
+        const input = document.getElementById('url-input').value.trim();
+        window.open(getFullUrl(input), '_blank');
     }
 
     function goBack() {
         const ifr = document.getElementById('ifr-' + activeId);
-        // Usamos el historial real del iframe
         try {
             ifr.contentWindow.history.back();
         } catch(e) {
-            // Si el navegador bloquea el acceso por seguridad (CORS), 
-            // al menos recargamos al inicio del dominio para no quedar atrapados.
-            ifr.src = DOMAIN;
+            console.warn("Restricción de seguridad: No se puede acceder al historial del iframe.");
         }
     }
 
@@ -114,18 +179,21 @@
         document.querySelectorAll('.tab, iframe').forEach(el => el.classList.remove('active'));
         document.getElementById('btn-' + id).classList.add('active');
         document.getElementById('ifr-' + id).classList.add('active');
+        
+        // Actualizar el input con el src del iframe (si es posible)
+        const ifr = document.getElementById('ifr-' + id);
+        document.getElementById('url-input').value = ifr.src.replace(DOMAIN, "");
     }
 
     function closeTab(e, id) {
         e.stopPropagation();
         document.getElementById('btn-' + id).remove();
         document.getElementById('ifr-' + id).remove();
-        const keys = document.querySelectorAll('.tab');
-        if (keys.length > 0) selectTab(keys[keys.length - 1].id.replace('btn-',''));
+        const tabs = document.querySelectorAll('.tab');
+        if (tabs.length > 0) selectTab(tabs[tabs.length - 1].id.replace('btn-',''));
         else addTab();
     }
 
-    // Iniciar
     addTab();
 </script>
 </body>
