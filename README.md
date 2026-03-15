@@ -17,3 +17,8 @@
 
 ## DISGUISE MODE
 &nbsp; [Disguise Classroom Edition](/Disguise)
+
+---
+
+## GAMES
+&nbsp; [Parkour Online](/parkour)
