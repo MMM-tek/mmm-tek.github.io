@@ -20,5 +20,5 @@
 
 ---
 
-## GAMES
-&nbsp; [Parkour Online](/parkour)
+## CHAT
+&nbsp; [Chat](/chat)
